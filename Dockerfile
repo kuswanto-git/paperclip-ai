@@ -1,20 +1,20 @@
-# Menggunakan Node.js versi ringan untuk menghemat RAM di Railway Free Tier
+# Menggunakan Node.js versi Alpine yang sangat ringan dan hemat RAM
 FROM node:20-alpine
 
-# Set environment produksi dan efisiensi memori
+# Set lingkungan produksi dan batasi RAM maksimal 350MB agar aman dari OOM
 ENV NODE_ENV=production
-
-# TRIK ANTI-OOM: Batasi penggunaan RAM Node.js maksimal 350MB dari limit 512MB Railway
 ENV NODE_OPTIONS="--max-old-space-size=350"
 
 WORKDIR /app
 
-# Ambil source code Paperclip langsung dari rilis publik resmi
+# 1. Install git & curl
+# 2. Clone repositori Paperclip resmi
+# 3. Gunakan 'npm install' biasa dengan flag hemat memori (bukan 'npm ci')
 RUN apk add --no-cache git curl \
     && git clone https://github.com/agencyenterprise/paperclip-ai.git . \
-    && npm ci --only=production
+    && npm install --omit=dev --no-audit --no-fund
 
-# Expose port untuk adapter lokal
+# Buka port adapter
 EXPOSE 3000
 
 # Jalankan aplikasi
