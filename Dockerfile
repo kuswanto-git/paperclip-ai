@@ -1,49 +1,21 @@
-# ============================================================
-# Paperclip Railway Dockerfile - Gemini Adapter Edition
-# Optimized for Railway Free Tier (512MB RAM limit)
-# ============================================================
+# Menggunakan Node.js versi ringan untuk menghemat RAM di Railway Free Tier
+FROM node:20-alpine
 
-FROM node:20-slim
+# Set environment produksi dan efisiensi memori
+ENV NODE_ENV=production
 
-# Install dependencies minimal (hemat memory & image size)
-RUN apt-get update && apt-get install -y \
-    curl \
-    git \
-    ca-certificates \
-    --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
+# TRIK ANTI-OOM: Batasi penggunaan RAM Node.js maksimal 350MB dari limit 512MB Railway
+ENV NODE_OPTIONS="--max-old-space-size=350"
 
-# Install Gemini CLI secara global (adapter lokal)
-RUN npm install -g @google/gemini-cli --ignore-scripts \
-    && npm cache clean --force
-
-# Set working directory
 WORKDIR /app
 
-# Clone Paperclip dari repo resmi
-RUN git clone https://github.com/Lukem121/paperclip.git . \
-    && rm -rf .git
+# Ambil source code Paperclip langsung dari rilis publik resmi
+RUN apk add --no-cache git curl \
+    && git clone https://github.com/agencyenterprise/paperclip-ai.git . \
+    && npm ci --only=production
 
-# Install dependencies produksi saja (bukan devDependencies)
-RUN npm install --omit=dev \
-    && npm cache clean --force
-
-# Buat direktori yang dibutuhkan
-RUN mkdir -p /app/run-logs /app/data /app/tmp
-
-# Copy file konfigurasi dari project kita
-COPY entrypoint.sh /entrypoint.sh
-COPY gemini-adapter.js /app/gemini-adapter.js
-
-# Beri izin eksekusi
-RUN chmod +x /entrypoint.sh
-
-# Expose port (Railway akan override via PORT env)
+# Expose port untuk adapter lokal
 EXPOSE 3000
 
-# Healthcheck agar Railway tahu app sudah siap
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-3000}/health || exit 1
-
-# Jalankan via entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+# Jalankan aplikasi
+CMD ["npm", "start"]
