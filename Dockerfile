@@ -9,7 +9,7 @@ WORKDIR /app
 
 # 1. Install git & curl
 # 2. Clone repositori Paperclip resmi
-# 3. Gunakan 'npm install' biasa dengan flag hemat memori (bukan 'npm ci')
+# 3. Install dependensi dengan flag hemat memori
 RUN apk add --no-cache git curl \
     && git clone https://github.com/agencyenterprise/paperclip-ai.git . \
     && npm install --omit=dev --no-audit --no-fund
@@ -17,5 +17,5 @@ RUN apk add --no-cache git curl \
 # Buka port adapter
 EXPOSE 3000
 
-# Jalankan aplikasi
-CMD ["npm", "start"]
+# SOLUSI JITU: Jalankan aplikasi langsung lewat Node, bukan lewat perintah npm start
+CMD ["node", "src/index.js"]
